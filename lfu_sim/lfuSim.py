@@ -50,6 +50,9 @@ class Heap:
             else:
                 print(self._A[i], end = ' ')
         print()
+
+
+
 class LfuHeap(Heap):
     
     def __init__(self, list, cache_slots):
@@ -81,7 +84,9 @@ class LfuHeap(Heap):
     def percolateUP(self, i:int):
         parent = (i-1)//2 #i번째 노드의 부모 노드 인덱스
         if i > 0 and self._A[i][1] < self._A[parent][1]:
-            self._A[i], self._A[parent] = self._A[parent], self._A[i]
+            temp = self._A[i]
+            self._A[i] = self._A[parent]
+            self._A[parent] = temp
             self.percolateUP(parent)
     def percolateDown(self, i:int):
         child = 2*i + 1 #i번째 노드의 왼쪽 자식
@@ -93,13 +98,11 @@ class LfuHeap(Heap):
                 self._A[child], self._A[i] = self._A[i], self._A[child] #서로 교체
                 self.percolateDown(child) # 스며내리기 재반복
     def search(self, x):
-        if not self.isEmpty():
-            #print(list(zip(*self._A))[0])
-            for i, v in enumerate(list(zip(*self._A))[0]):
-                if x == v:
-                    return i
-        return False
-                
+        ls = [i[0] for i in self._A]
+        if x in ls:
+            return ls.index(x)
+        else:
+            return False
         
         
         
@@ -112,51 +115,36 @@ def lfu_sim(cache_slots):
     cache_table = dict()
     cache_heap = LfuHeap([],cache_slots)
 
-    # for line in data_file.readlines():
-    #     lpn = line.split()[0]
-    #     if lpn not in cache_table.keys():
-    #         cache_table[lpn] = 1
-    #     if not cache_heap.search(lpn):
-    #         if cache_heap.isFull():
-    #             evicted = cache_heap.deleteMin()
-    #             cache_table[evicted[0]] = evicted[1]
-    #         cache_heap.insert(lpn, cache_table[lpn])
-    #     else:
-    #         index = cache_heap.search(lpn)
-    #         cache_heap[index][1] += 1
-    #         cache_heap.percolateUP(index)
-    #         cache_hit += 1
-    #     tot_cnt += 1
-    
     #디버깅
     for line in data_file.readlines():
         lpn = line.split()[0]
         if lpn not in cache_table.keys():
             cache_table[lpn] = 1
-        if not cache_heap.search(lpn):
+        else:
+            cache_table[lpn] += 1
+        if cache_heap.search(lpn) is False:
             if cache_heap.isFull():
-                evicted = cache_heap.deleteMin()
-                cache_table[evicted[0]] = evicted[1]
+                cache_heap.deleteMin()
             cache_heap.insert(lpn, cache_table[lpn])
         else:
             index = cache_heap.search(lpn)
             cache_heap.increase(index)
-            cache_heap.percolateUP(index)
+            cache_table[lpn] += 1
+            cache_heap.percolateDown(index)
             cache_hit += 1
         tot_cnt += 1
-        # cache_heap.print_heap()
-    
     
     
     
     # Program here 
 
     print("cache_slot = ", cache_slots, "cache_hit = ", cache_hit, "hit ratio = ", cache_hit / tot_cnt, tot_cnt)
+    print(sum(cache_table.values()))
 
 if __name__ == "__main__":
-    test = LfuHeap([],10)
-   
-    for cache_slots in range(100, 1000, 100):
+    #lfu_sim(4000)
+
+    for cache_slots in range(100,1000,100):
         lfu_sim(cache_slots)
 
 
